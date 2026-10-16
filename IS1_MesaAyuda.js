@@ -420,67 +420,105 @@ app.post('/api/updateCliente', (req,res) => {
 /api/resetCliente
 Permite cambiar la password de un cliente
 */
-app.post('/api/resetCliente', (req,res) => {
-    
-    const {id}       = req.body;
-    const {password} = req.body;
- 
-    if (!id) {
-        res.status(400).send({response : "ERROR" , message: "Id no informada"});
+
+      app.post('/api/resetCliente', (req, res) => {
+
+    const { contacto, password } = req.body;
+
+    console.log("resetCliente: contacto(" + contacto + ")");
+
+    if (!contacto) {
+        res.status(400).send({
+            response: "ERROR",
+            message: "Correo electrónico no informado"
+        });
         return;
     }
 
     if (!password) {
-        res.status(400).send({response : "ERROR" , message: "Password no informada"});
+        res.status(400).send({
+            response: "ERROR",
+            message: "Password no informada"
+        });
         return;
     }
 
-    var params = {
-        TableName: "cliente",
-        Key: {
-            "id" : id
-            //test use "id": "0533a95d-7eef-4c6b-b753-1a41c9d1fbd0"   
-             }
-        };
-        
-    docClient.get(params, function (err, data) {
-        if (err)  {
-            res.status(400).send(JSON.stringify({response : "ERROR", message : "DB access error "+ null}));
-            return;
-        } else {
+    scanDb(contacto)
+        .then(resultDb => {
 
-            if (Object.keys(data).length == 0) {
-                res.status(400).send(JSON.stringify({"response":"ERROR",message : "Cliente no existe"}),null,2);
+            if (!resultDb || resultDb.length === 0) {
+                res.status(400).send({
+                    response: "ERROR",
+                    message: "Cliente no existe"
+                });
                 return;
-            } else {
-
-                const paramsUpdate = { 
-   
-                    ExpressionAttributeNames: { 
-                         "#p": "password" 
-                    }, 
-                    ExpressionAttributeValues: { 
-                        ":p": password 
-                   }, 
-                   Key: { 
-                       "id": id 
-                   }, 
-                   ReturnValues: "ALL_NEW", 
-                   TableName: "cliente", 
-                   UpdateExpression: "SET #p = :p" 
-                };
-                docClient.update(paramsUpdate, function (err, data) {
-                    if (err)  {
-                        res.status(400).send(JSON.stringify({response : "ERROR", message : "DB access error "+err}));
-                        return;
-                    } else {
-                        res.status(200).send(JSON.stringify({response : "OK", message : "updated" , "data": data}));
-                    }    
-                });    
             }
-        }    
-    })
-});
+
+            const cliente = resultDb[0];
+
+            var hoy = new Date();
+
+            var dd = String(hoy.getDate()).padStart(2, '0');
+            var mm = String(hoy.getMonth() + 1).padStart(2, '0');
+            var yyyy = hoy.getFullYear();
+
+            hoy = dd + '/' + mm + '/' + yyyy;
+
+            const paramsUpdate = {
+
+                TableName: "cliente",
+
+                Key: {
+                    id: cliente.id
+                },
+
+                ExpressionAttributeNames: {
+                    "#p": "password",
+                    "#f": "fecha_cambio_password"
+                },
+
+                ExpressionAttributeValues: {
+                    ":p": password,
+                    ":f": hoy
+                },
+
+                UpdateExpression: "SET #p = :p, #f = :f",
+
+                ReturnValues: "ALL_NEW"
+            };
+
+            docClient.update(paramsUpdate, function (err, data) {
+
+                if (err) {
+
+                    res.status(400).send({
+                        response: "ERROR",
+                        message: "DB access error " + err
+                    });
+
+                } else {
+
+                    res.status(200).send({
+                        response: "OK",
+                        message: "Password actualizada"
+                    });
+
+                }
+
+            });
+
+        })
+        .catch(err => {
+
+            res.status(400).send({
+                response: "ERROR",
+                message: "DB access error " + err
+            });
+
+        });
+
+});  
+
 /*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*
 /*                                                       API REST ticket                                                             *
 /*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*/
