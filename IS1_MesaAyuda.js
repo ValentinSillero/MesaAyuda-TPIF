@@ -154,6 +154,115 @@ async function scanDb(contacto) {
 addCliente
 Revisa si el contacto (e-mail) existe y en caso que no da de alta el cliente generando un id al azar
 */
+
+app.post('/api/addCliente', (req, res) => {
+
+    const { contacto, password, nombre } = req.body;
+
+    console.log("addCliente: contacto(" + contacto + ") nombre(" + nombre + ")");
+
+    if (!password) {
+        res.status(400).send({
+            response: "ERROR",
+            message: "Password no informada"
+        });
+        return;
+    }
+
+    if (!nombre) {
+        res.status(400).send({
+            response: "ERROR",
+            message: "Nombre no informado"
+        });
+        return;
+    }
+
+    if (!contacto) {
+        res.status(400).send({
+            response: "ERROR",
+            message: "Contacto no informado"
+        });
+        return;
+    }
+
+    scanDb(contacto)
+        .then(resultDb => {
+
+            if (resultDb.length !== 0) {
+
+                res.status(400).send({
+                    response: "ERROR",
+                    message: "Cliente ya existe"
+                });
+
+                return;
+            }
+
+            var hoy = new Date();
+
+            var dd = String(hoy.getDate()).padStart(2, '0');
+            var mm = String(hoy.getMonth() + 1).padStart(2, '0');
+            var yyyy = hoy.getFullYear();
+
+            hoy = dd + '/' + mm + '/' + yyyy;
+
+            const newCliente = {
+
+                id: crypto.randomUUID(),
+                contacto: contacto,
+                nombre: nombre,
+                password: password,
+
+                activo: true,
+                registrado: true,
+                primer_ingreso: false,
+
+                fecha_alta: hoy,
+                fecha_cambio_password: hoy,
+                fecha_ultimo_ingreso: hoy
+
+            };
+
+            const paramsPut = {
+
+                TableName: "cliente",
+                Item: newCliente,
+                ConditionExpression: 'attribute_not_exists(id)'
+
+            };
+
+            docClient.put(paramsPut, function (err, data) {
+
+                if (err) {
+
+                    res.status(400).send({
+                        response: "ERROR",
+                        message: "DB error " + err
+                    });
+
+                } else {
+
+                    res.status(200).send({
+                        response: "OK",
+                        cliente: newCliente
+                    });
+
+                }
+
+            });
+
+        })
+        .catch(err => {
+
+            res.status(400).send({
+                response: "ERROR",
+                message: "DB access error " + err
+            });
+
+        });
+
+});
+
 app.post('/api/loginCliente', (req, res) => {
 
     const { contacto, password } = req.body;
