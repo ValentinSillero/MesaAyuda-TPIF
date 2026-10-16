@@ -15,7 +15,7 @@ formE1.addEventListener('submit', (event) => {
         Realiza validaciones en los datos del formulario antes de procesar
         */
 
-	if (data.id == '' || data.password == '') {
+	if (data.contacto == '' || data.password == '') {
 		console.log('debe indicar usuario');
 		document.getElementById('resultado1').style.color = 'RED';
 		document.getElementById('resultado1').style.textAlign = 'center';
@@ -70,10 +70,10 @@ formE1.addEventListener('submit', (event) => {
 	/*-----
         Crea estructuras para acceder a data del cliente
         */
-	    const login = {
-	        id: data.id,
-		    password: data.password
-		}	
+		const login = {
+    		 contacto: data.contacto,
+             password: data.password
+	}
 
 		const options = {
 			method: 'POST',
