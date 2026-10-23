@@ -566,7 +566,172 @@ app.post('/api/listarTicket', (req,res) => {
     });
 
 });
+/*----------
+  resumenTickets POST
+  Devuelve un resumen de los tickets de un cliente autenticado
+*/
 
+app.post('/api/resumenTickets', (req, res) => {
+
+    const { ID, PASSWORD } = req.body;
+
+    console.log("resumenTickets POST: ID(" + ID + ")");
+
+    if (!ID) {
+        res.status(400).send({
+            response: "ERROR",
+            message: "Usuario no informado"
+        });
+        return;
+    }
+
+    if (!PASSWORD) {
+        res.status(400).send({
+            response: "ERROR",
+            message: "Password no informada"
+        });
+        return;
+    }
+
+    // ID contiene el correo electrónico del cliente
+    scanDb(ID)
+        .then(clientes => {
+
+            if (!clientes || clientes.length === 0) {
+                res.status(400).send({
+                    response: "ERROR",
+                    message: "Cliente no existe"
+                });
+                return;
+            }
+
+            const cliente = clientes[0];
+
+            if (cliente.password !== PASSWORD) {
+                res.status(400).send({
+                    response: "ERROR",
+                    message: "Usuario o password incorrecto"
+                });
+                return;
+            }
+
+            scanDbTicket(cliente.id)
+                .then(tickets => {
+
+                    const resumenTickets = tickets.map(ticket => ({
+                        id: ticket.id,
+                        fecha_apertura: ticket.fecha_apertura,
+                        estado: ticket.estado_solucion
+                    }));
+
+                    res.status(200).send({
+                        response: "OK",
+                        cliente: {
+                            id: cliente.id,
+                            correo: cliente.contacto,
+                            cantidad_tickets: tickets.length,
+                            tickets: resumenTickets
+                        }
+                    });
+
+                });
+
+        })
+        .catch(err => {
+
+            console.log("Error resumenTickets:", err);
+
+            res.status(400).send({
+                response: "ERROR",
+                message: "DB access error " + err
+            });
+
+        });
+
+});
+/*----------
+  resumenTickets GET
+  Devuelve un resumen de los tickets de un cliente autenticado
+*/
+
+app.get('/api/resumenTickets', (req, res) => {
+
+    const { ID, PASSWORD } = req.query;
+
+    console.log("resumenTickets GET: ID(" + ID + ")");
+
+    if (!ID) {
+        res.status(400).send({
+            response: "ERROR",
+            message: "Usuario no informado"
+        });
+        return;
+    }
+
+    if (!PASSWORD) {
+        res.status(400).send({
+            response: "ERROR",
+            message: "Password no informada"
+        });
+        return;
+    }
+
+    // ID contiene el correo electrónico del cliente
+    scanDb(ID)
+        .then(clientes => {
+
+            if (!clientes || clientes.length === 0) {
+                res.status(400).send({
+                    response: "ERROR",
+                    message: "Cliente no existe"
+                });
+                return;
+            }
+
+            const cliente = clientes[0];
+
+            if (cliente.password !== PASSWORD) {
+                res.status(400).send({
+                    response: "ERROR",
+                    message: "Usuario o password incorrecto"
+                });
+                return;
+            }
+
+            scanDbTicket(cliente.id)
+                .then(tickets => {
+
+                    const resumenTickets = tickets.map(ticket => ({
+                        id: ticket.id,
+                        fecha_apertura: ticket.fecha_apertura,
+                        estado: ticket.estado_solucion
+                    }));
+
+                    res.status(200).send({
+                        response: "OK",
+                        cliente: {
+                            id: cliente.id,
+                            correo: cliente.contacto,
+                            cantidad_tickets: tickets.length,
+                            tickets: resumenTickets
+                        }
+                    });
+
+                });
+
+        })
+        .catch(err => {
+
+            console.log("Error resumenTickets GET:", err);
+
+            res.status(400).send({
+                response: "ERROR",
+                message: "DB access error " + err
+            });
+
+        });
+
+});
 /*---------
   getTicket
   API REST para obtener los detalles de un ticket
