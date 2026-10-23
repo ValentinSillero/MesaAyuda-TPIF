@@ -736,34 +736,214 @@ app.get('/api/resumenTickets', (req, res) => {
   getTicket
   API REST para obtener los detalles de un ticket
 */
-app.post('/api/getTicket', (req,res) => {
-    const {id}  = req.body;
-    console.log("getTicket: id("+id+")");
- 
-    if (!id) {
-        res.status(400).send({response : "ERROR" , message: "ticket id no informada"});
+/*---------
+  getTicket POST
+  Obtiene un ticket validando previamente al cliente
+*/
+
+app.post('/api/getTicket', async (req, res) => {
+
+    const { ID, PASSWORD, TICKET } = req.body;
+
+    console.log("getTicket POST: ID(" + ID + ") TICKET(" + TICKET + ")");
+
+    if (!ID) {
+        res.status(400).send({
+            response: "ERROR",
+            message: "Usuario no informado"
+        });
         return;
     }
-    var params = {
-        TableName: "ticket",
-        Key: {
-            "id" : id
-            //"clienteID": "0533a95d-7eef-4c6b-b753-1a41c9d1fbd0"   
-            //"id"       : "e08905a8-4aab-45bf-9948-4ba2b8602ced"
+
+    if (!PASSWORD) {
+        res.status(400).send({
+            response: "ERROR",
+            message: "Password no informada"
+        });
+        return;
+    }
+
+    if (!TICKET) {
+        res.status(400).send({
+            response: "ERROR",
+            message: "Ticket no informado"
+        });
+        return;
+    }
+
+    try {
+
+        // ID contiene el correo electrónico del cliente
+        const clientes = await scanDb(ID);
+
+        if (!clientes || clientes.length === 0) {
+            res.status(400).send({
+                response: "ERROR",
+                message: "Cliente no existe"
+            });
+            return;
         }
-    };
-    docClient.get(params, function (err, data) {
-        if (err) {
-            res.status(400).send(JSON.stringify({response : "ERROR", message : "DB access error "+err}));
+
+        const cliente = clientes[0];
+
+        if (cliente.password !== PASSWORD) {
+            res.status(400).send({
+                response: "ERROR",
+                message: "Usuario o password incorrecto"
+            });
+            return;
         }
-        else {
-            if (Object.keys(data).length == 0) {
-                res.status(400).send({response : "ERROR" , message : "ticket invalido"});
-            } else {
-                res.status(200).send(JSON.stringify({response : "OK", "data" : data}));    
-            }    
+
+        const params = {
+            TableName: "ticket",
+            Key: {
+                id: TICKET
+            }
+        };
+
+        const data = await docClient.get(params).promise();
+
+        if (!data.Item) {
+            res.status(400).send({
+                response: "ERROR",
+                message: "Ticket no existe"
+            });
+            return;
         }
-    })
+
+        // Verificar que el ticket corresponda al cliente autenticado
+        if (data.Item.clienteID !== cliente.id) {
+            res.status(400).send({
+                response: "ERROR",
+                message: "El ticket no pertenece al cliente"
+            });
+            return;
+        }
+
+        res.status(200).send({
+            response: "OK",
+            cliente: {
+                id: cliente.id,
+                correo: cliente.contacto
+            },
+            ticket: data.Item
+        });
+
+    } catch (err) {
+
+        console.log("Error getTicket:", err);
+
+        res.status(400).send({
+            response: "ERROR",
+            message: "DB access error " + err
+        });
+
+    }
+
+});
+
+/*---------
+  getTicket GET
+  Obtiene un ticket validando previamente al cliente
+*/
+
+app.get('/api/getTicket', async (req, res) => {
+
+    const { ID, PASSWORD, TICKET } = req.query;
+
+    console.log("getTicket GET: ID(" + ID + ") TICKET(" + TICKET + ")");
+
+    if (!ID) {
+        res.status(400).send({
+            response: "ERROR",
+            message: "Usuario no informado"
+        });
+        return;
+    }
+
+    if (!PASSWORD) {
+        res.status(400).send({
+            response: "ERROR",
+            message: "Password no informada"
+        });
+        return;
+    }
+
+    if (!TICKET) {
+        res.status(400).send({
+            response: "ERROR",
+            message: "Ticket no informado"
+        });
+        return;
+    }
+
+    try {
+
+        const clientes = await scanDb(ID);
+
+        if (!clientes || clientes.length === 0) {
+            res.status(400).send({
+                response: "ERROR",
+                message: "Cliente no existe"
+            });
+            return;
+        }
+
+        const cliente = clientes[0];
+
+        if (cliente.password !== PASSWORD) {
+            res.status(400).send({
+                response: "ERROR",
+                message: "Usuario o password incorrecto"
+            });
+            return;
+        }
+
+        const params = {
+            TableName: "ticket",
+            Key: {
+                id: TICKET
+            }
+        };
+
+        const data = await docClient.get(params).promise();
+
+        if (!data.Item) {
+            res.status(400).send({
+                response: "ERROR",
+                message: "Ticket no existe"
+            });
+            return;
+        }
+
+        if (data.Item.clienteID !== cliente.id) {
+            res.status(400).send({
+                response: "ERROR",
+                message: "El ticket no pertenece al cliente"
+            });
+            return;
+        }
+
+        res.status(200).send({
+            response: "OK",
+            cliente: {
+                id: cliente.id,
+                correo: cliente.contacto
+            },
+            ticket: data.Item
+        });
+
+    } catch (err) {
+
+        console.log("Error getTicket GET:", err);
+
+        res.status(400).send({
+            response: "ERROR",
+            message: "DB access error " + err
+        });
+
+    }
+
 });
 
 /*-----------------
