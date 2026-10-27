@@ -139,9 +139,16 @@ formE1.addEventListener('submit', (event) => {
 				'Datos en respuesta del application server=' + JSON.stringify(users)
 			);
 			console.log('users.response=' + users.password);
+			const linkRegistro = document.getElementById('linkRegistro');
+
 			if (users.response == 'OK') {
-				//<==Habilitar esto para dejar que el API REST verifique sin exponer la password
+
+				// El cliente existe: Registrate queda deshabilitado
+				linkRegistro.style.pointerEvents = 'none';
+				linkRegistro.style.color = 'gray';
+
 				console.log('La password es correcta');
+
 				console.log(
 					'nombre(' +
 						users.nombre +
@@ -150,6 +157,7 @@ formE1.addEventListener('submit', (event) => {
 						')' +
 						'mode(' + MODE + ')'
 				);
+
 				console.log(
 					'id=' +
 						users.id +
@@ -158,6 +166,7 @@ formE1.addEventListener('submit', (event) => {
 						' ultimo=' +
 						users.fecha_ultimo_ingreso
 				);
+
 				console.log(
 					'changing to ' +
 						systemURL.listarTicket +
@@ -171,6 +180,7 @@ formE1.addEventListener('submit', (event) => {
 						users.fecha_ultimo_ingreso +
 						'&mode=' + MODE
 				);
+
 				window.location.href =
 					systemURL.listarTicket +
 					'?id=' +
@@ -182,11 +192,32 @@ formE1.addEventListener('submit', (event) => {
 					'&fecha_ultimo_ingreso=' +
 					users.fecha_ultimo_ingreso +
 					'&mode=' + MODE;
-			} else {
-				console.log('La password no es correcta');
-				document.getElementById('resultado1').style.color = 'RED'; /*--Fix hecho por  Germán Lombardi IS1-2025 */
+
+			} else if (
+				users.message == 'Cliente inválido' ||
+				users.message == 'Cliente invalido' ||
+				users.message == 'Cliente no existe'
+			) {
+
+				// El correo no existe: se habilita Registrate
+				linkRegistro.style.pointerEvents = 'auto';
+				linkRegistro.style.color = 'blue';
+
+				document.getElementById('resultado1').style.color = 'RED';
 				document.getElementById('resultado1').textContent =
-					'Error de login, intente nuevamente';                  /*--Fix hecho por  Germán Lombardi IS1-2025 */
+					'Cliente no registrado. Puede registrarse.';
+
+			} else {
+
+				// El correo existe, pero la contraseña es incorrecta
+				linkRegistro.style.pointerEvents = 'none';
+				linkRegistro.style.color = 'gray';
+
+				console.log('La password no es correcta');
+
+				document.getElementById('resultado1').style.color = 'RED';
+				document.getElementById('resultado1').textContent =
+					'Error de login, intente nuevamente';
 			}
 		});
 });
