@@ -9,18 +9,35 @@ form.addEventListener('submit', async function (event) {
 
     const resultado = document.getElementById('resultado');
 
-    // Validar campos
-    if (!data.nombre || !data.contacto || !data.password) {
+    // Validar que todos los campos estén completos
+    if (!data.nombre || !data.contacto || !data.password || !data.password2) {
+
+        resultado.style.color = "red";
         resultado.innerHTML = "Debe completar todos los campos";
+
+        return;
+    }
+
+    // Validar que ambas contraseñas coincidan
+    if (data.password !== data.password2) {
+
+        resultado.style.color = "red";
+        resultado.innerHTML = "Las contraseñas no coinciden";
+
         return;
     }
 
     // Validar términos y condiciones
     if (!data.termscondition) {
+
+        resultado.style.color = "red";
         resultado.innerHTML = "Debe aceptar los términos y condiciones";
+
         return;
     }
 
+    // Se envía una sola contraseña al backend.
+    // password2 solamente se utiliza para validar en el frontend.
     const nuevoCliente = {
         nombre: data.nombre,
         contacto: data.contacto,
@@ -44,12 +61,12 @@ form.addEventListener('submit', async function (event) {
 
         if (respuesta.response === "OK") {
 
-            alert("Usuario registrado correctamente");
-
-            window.location.href = "loginClient.html";
+            resultado.style.color = "green";
+            resultado.innerHTML = "Usuario registrado correctamente";
 
         } else {
 
+            resultado.style.color = "red";
             resultado.innerHTML = respuesta.message;
 
         }
@@ -58,6 +75,7 @@ form.addEventListener('submit', async function (event) {
 
         console.error(error);
 
+        resultado.style.color = "red";
         resultado.innerHTML = "Error al conectar con el servidor";
 
     }
