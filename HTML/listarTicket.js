@@ -31,10 +31,10 @@ console.log("mode:"+query.mode);
 document.getElementById("lastlogin").innerHTML =
     "<table>" +
     "<tr><td>Correo electrónico</td><td>" + query.contacto + "</td></tr>" +
+    "<tr><td>ID de cliente</td><td>" + query.id + "</td></tr>" +
     "<tr><td>Nombre</td><td>" + query.nombre + "</td></tr>" +
     "<tr><td>Último ingreso</td><td>" + query.fecha_ultimo_ingreso + "</td></tr>" +
     "</table>";
-
 
 const systemURL={ 
 
