@@ -11,13 +11,19 @@ form.addEventListener('submit', async function (event) {
 
     // Verificar que todos los campos estén completos
     if (!data.contacto || !data.password || !data.password2) {
+
+        resultado.style.color = "red";
         resultado.innerHTML = "Debe completar todos los campos";
+
         return;
     }
 
     // Verificar que las dos contraseñas sean iguales
     if (data.password !== data.password2) {
+
+        resultado.style.color = "red";
         resultado.innerHTML = "Las contraseñas no coinciden";
+
         return;
     }
 
@@ -43,12 +49,12 @@ form.addEventListener('submit', async function (event) {
 
         if (respuesta.response === "OK") {
 
-            alert("Contraseña actualizada correctamente");
-
-            window.location.href = "loginClient.html";
+            resultado.style.color = "green";
+            resultado.innerHTML = "Contraseña actualizada correctamente";
 
         } else {
 
+            resultado.style.color = "red";
             resultado.innerHTML = respuesta.message;
 
         }
@@ -57,6 +63,7 @@ form.addEventListener('submit', async function (event) {
 
         console.error(error);
 
+        resultado.style.color = "red";
         resultado.innerHTML = "Error al conectar con el servidor";
 
     }
